@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speak Test.</title>
+    <style>
+    </style>
+</head>
+<body>
+    <input type="text" id="textToSpeak" placeholder="1, 2, 3">
+    <button type="button" id="speakBtn" disabled>Speak</button>
+    <script>
+        if ( 'speechSynthesis' in window ) {
+          speechSynthesis.cancel(); // removes anything 'stuck'
+          speechSynthesis.getVoices();
+          // Safari loads voices synchronously so now safe to enable
+          speakBtn.disabled = false;
+        }
+
+        const speak = () => {
+          const utter = new SpeechSynthesisUtterance();
+          utter.text = textToSpeak.value || textToSpeak.placeholder;
+          speechSynthesis.speak(utter);
+        };  
+
+        speakBtn.addEventListener('click', speak);
+    </script>
+</body>
+</html>
