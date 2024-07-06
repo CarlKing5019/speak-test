@@ -86,33 +86,34 @@
         }
 
         function notify(title, message) {
-            if (window.Notification) {
-                if (Notification.permission === "granted") {
-                    new Notification(title, { body: message });
-                } else {
-                    if (Notification.permission !== "granted") {
-                        Notification.requestPermission().then(permission => {
-                        });
-                    }
-                }
-            } else {
-                alert('浏览器不支持 Notification!');
-            }
+            // if (window.Notification) {
+            //     if (Notification.permission === "granted") {
+            //         new Notification(title, { body: message });
+            //     } else {
+            //         if (Notification.permission !== "granted") {
+            //             Notification.requestPermission().then(permission => {
+            //             });
+            //         }
+            //     }
+            // } else {
+            //     alert('浏览器不支持 Notification!');
+            // }
         }
 
         function speakMessage(message) {
             return new Promise(resolve => {
-                if ('speechSynthesis' in window) {
-                    speechSynthesis.cancel(); // removes anything 'stuck'
-                    speechSynthesis.getVoices(); // Safari loads voices synchronously so now safe to enable
-                } else {
-                    return resolve();
-                }
+                return resolve();
+                // if ('speechSynthesis' in window) {
+                //     speechSynthesis.cancel(); // removes anything 'stuck'
+                //     speechSynthesis.getVoices(); // Safari loads voices synchronously so now safe to enable
+                // } else {
+                //     return resolve();
+                // }
 
-                const utter = new SpeechSynthesisUtterance();
-                utter.text = message;
-                utter.onend = resolve;
-                speechSynthesis.speak(utter);
+                // const utter = new SpeechSynthesisUtterance();
+                // utter.text = message;
+                // utter.onend = resolve;
+                // speechSynthesis.speak(utter);
             });
         }
 
@@ -204,17 +205,17 @@
             }
         }
 
-        // 检查通知权限
-        if (Notification.permission !== "granted") {
-            Notification.requestPermission().then(permission => {
-            });
-        }
+        // // 检查通知权限
+        // if (Notification.permission !== "granted") {
+        //     Notification.requestPermission().then(permission => {
+        //     });
+        // }
 
-        // 检查语音播报权限
-        if ('speechSynthesis' in window) {
-          speechSynthesis.cancel();
-          speechSynthesis.getVoices();
-        }
+        // // 检查语音播报权限
+        // if ('speechSynthesis' in window) {
+        //   speechSynthesis.cancel();
+        //   speechSynthesis.getVoices();
+        // }
 
         document.addEventListener("DOMContentLoaded", () => {
             const myDate = new Date();
