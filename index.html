@@ -3,28 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Speak Test.</title>
+    <title>Rehabilitation Training Reminder</title>
     <style>
+        #output {
+            white-space: pre-line;
+            font-family: monospace;
+        }
+        #progress-container{
+            width: 350px;
+            max-width: 100%;
+            height: 20px;
+            border: black 1px solid;
+            position: relative;
+        }
+        #progress{
+            width: 0px;
+            height: 20px;
+            margin: 0;
+            background: black;
+        }
+        #info{
+            position: absolute;
+            top: 1px;
+            right: 0;
+        }
+        #pause-btn {
+            width: 352px;
+            max-width:100%;
+            height: 30px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            border-radius: 1px;
+            border: 1px solid;
+        }
     </style>
 </head>
 <body>
-    <input type="text" id="textToSpeak" placeholder="1, 2, 3">
-    <button type="button" id="speakBtn" disabled>Speak</button>
+    <h1>Rehabilitation Training Reminder</h1>
+    <h2 id="head"></h2>
+    <div id="output"></div>
+    <div id="progress-container">
+        <p id="progress">
+            <span id="info"></span>
+        </p>
+    </div>
+    <div id="pause-btn-container">
+        <button id="pause-btn">暂停</button>
+    <div>
     <script>
-        if ( 'speechSynthesis' in window ) {
-          speechSynthesis.cancel(); // removes anything 'stuck'
-          speechSynthesis.getVoices();
-          // Safari loads voices synchronously so now safe to enable
-          speakBtn.disabled = false;
+        /* 设置开始 */
+        const reminders = [
+            "点赞！",
+            "打枪！",
+            "点点点！",
+            "握手指！",
+            "伸展手指！",
+            "往上压手腕！",
+            "往前拉伸手！",
+            "往下压手腕！",
+            "往前拉伸手！",
+            "往下压手腕！",
+            "往左拉伸手！",
+            "往右拉伸手！"
+        ];
+        const startDuration = 5;
+        const trainingDuration = 60;
+        const littleRestDuration = 15;
+        const bigRestDuration = 180;
+        /* 设置结束 */
+
+
+        let isPaused = false;
+        const pauseBtn = document.getElementById('pause-btn');
+        pauseBtn.addEventListener('click', () => {
+            isPaused = !isPaused;
+            pauseBtn.textContent = isPaused ? '继续' : '暂停';
+        });
+
+        function logMessage(message) {
+            const outputDiv = document.getElementById("output");
+            outputDiv.textContent += message + '\n';
         }
 
-        const speak = () => {
-          const utter = new SpeechSynthesisUtterance();
-          utter.text = textToSpeak.value || textToSpeak.placeholder;
-          speechSynthesis.speak(utter);
-        };  
+        function notify(title, message) {
+            if (window.Notification) {
+                if (Notification.permission === "granted") {
+                    new Notification(title, { body: message });
+                } else {
+                    if (Notification.permission !== "granted") {
+                        Notification.requestPermission().then(permission => {
+                        });
+                    }
+                }
+            } else {
+                alert('浏览器不支持 Notification!');
+            }
+        }
 
-        speakBtn.addEventListener('click', speak);
+        function speakMessage(message) {
+            return new Promise(resolve => {
+                if ('speechSynthesis' in window) {
+                    speechSynthesis.cancel(); // removes anything 'stuck'
+                    speechSynthesis.getVoices(); // Safari loads voices synchronously so now safe to enable
+                } else {
+                    return resolve();
+                }
+
+                const utter = new SpeechSynthesisUtterance();
+                utter.text = message;
+                utter.onend = resolve;
+                speechSynthesis.speak(utter);
+            });
+        }
+
+        function printProgressBar(totalSeconds) {
+            return new Promise(resolve => {
+                const progress = document.getElementById('progress');
+                const info = document.getElementById('info');
+    
+                let elapsedSeconds = 0;
+                const progressBarInterval = setInterval(() => {
+                    if (!isPaused) {
+                        elapsedSeconds++;
+                        const remainingSeconds = totalSeconds - elapsedSeconds;
+                        const minutes = Math.floor(remainingSeconds / 60);
+                        const seconds = remainingSeconds % 60;
+                        const percent = (elapsedSeconds / totalSeconds) * 100;
+                        progress.style.width = `${percent}%`;
+                        info.innerHTML = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+                        if (elapsedSeconds >= totalSeconds) {
+                            clearInterval(progressBarInterval);
+                            resolve();
+                        }
+                    }
+                }, 1000);
+            });
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => {
+                let elapsedSeconds = 0;
+                let totalSeconds = Math.floor(ms / 100);
+                const interval = setInterval(() => {
+                    if (!isPaused) {
+                        elapsedSeconds++;
+                        if (elapsedSeconds >= totalSeconds) {
+                            clearInterval(interval);
+                            resolve();
+                        }
+                    }
+                }, 100);
+            });
+        }
+
+        async function runRemind(startIndex) {
+            let index = startIndex;
+            let loops = Math.floor(index / reminders.length);
+            let old_loops = loops;
+            const current_time = new Date().toLocaleString();
+
+            logMessage(`${current_time} - 开始进行第 ${loops + 1} 次康复训练！！！`);
+            notify("康复训练提醒", "准备开始康复训练");
+            await speakMessage("Start rehabilitation training.");
+            await printProgressBar(startDuration);
+            window.scrollBy(0,30);
+
+            while (true) {
+                const current_time = new Date().toLocaleString();
+                const re_index = index % reminders.length;
+                const reminder_text = `${current_time} - (${loops + 1}, ${re_index + 1}) 第 ${loops + 1} 次${reminders[re_index]}`;
+                logMessage(reminder_text);
+                window.scrollBy(0,30);
+                
+                notify("康复训练提醒", reminders[re_index]);
+                await speakMessage("It's time to do the next training.");
+                await printProgressBar(trainingDuration);
+                window.scrollBy(0,30);
+
+                index += 1;
+                loops = Math.floor(index / reminders.length);
+                if (loops === old_loops) {
+                    notify("康复训练提醒", `休息 ${littleRestDuration} 秒`);
+                    await speakMessage("It's time to rest.");
+                    await printProgressBar(littleRestDuration);
+                    window.scrollBy(0,30);
+                } else {
+                    logMessage(`${current_time} - 第 ${loops} 次长休息！`);
+                    notify("康复训练提醒", `休息 ${bigRestDuration} 秒.`);
+                    await speakMessage("It's time to have a long rest.");
+                    await printProgressBar(bigRestDuration);
+                    window.scrollBy(0,30);
+                    old_loops = loops;
+                    logMessage(`${current_time} - 开始进行第 ${loops + 1} 次康复训练！！！`);
+                    notify("康复训练提醒", "准备开始康复训练");
+                    await speakMessage("Start rehabilitation training.");
+                    await printProgressBar(startDuration);
+                    window.scrollBy(0,30);
+                }
+            }
+        }
+
+        // 检查通知权限
+        if (Notification.permission !== "granted") {
+            Notification.requestPermission().then(permission => {
+            });
+        }
+
+        // 检查语音播报权限
+        if ('speechSynthesis' in window) {
+          speechSynthesis.cancel();
+          speechSynthesis.getVoices();
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const myDate = new Date();
+            var dateStart = new Date("2024-07-04T00:00:00");
+            var diffValue = Math.floor((myDate - dateStart) / (1000 * 60 * 60 * 24)) + 1;
+            const currentDateStr = `${myDate.getMonth() + 1}月${myDate.getDate()}日`;
+            message = `${currentDateStr}，康复训练第${diffValue}天`;
+            const head = document.getElementById("head");
+            head.textContent += message;
+
+            logMessage("康复训练内容如下:");
+            reminders.forEach((reminder, index) => logMessage(`${index + 1}. ${reminder}`));
+            logMessage("每个动作一分钟，十个一组，每天三到五组！做完后冷敷！");
+
+            var loops = parseInt(prompt(`请输入是第几次训练 (>1): `), 10);
+            var re_index = parseInt(prompt(`请输入训练项目的索引 (1-${reminders.length}): `), 10);
+            if (isNaN(loops)) {
+                loops = 1;
+            }
+            if (isNaN(re_index)) {
+                re_index = 1;
+            }
+            if (isNaN(loops) || isNaN(re_index) || loops < 1 || re_index < 1 || re_index > reminders.length) {
+                alert("输入无效，请刷新页面并输入一个有效的索引。");
+                return;
+            }
+            const startIndex = (loops - 1) * reminders.length + re_index - 1;
+
+            runRemind(startIndex);
+        });
     </script>
 </body>
 </html>
